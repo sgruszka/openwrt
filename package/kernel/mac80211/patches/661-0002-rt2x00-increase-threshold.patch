@@ -1,0 +1,26 @@
+From 63322304f367016cd5a2c739e4d104188b873a07 Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Thu, 6 Sep 2018 14:27:47 +0200
+Subject: [PATCH 2/2] rt2x00: increase threshold
+
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+---
+ drivers/net/wireless/ralink/rt2x00/rt2x00queue.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c b/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
+index 710e9641552e..b90497e164a6 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
+@@ -1233,7 +1233,7 @@ static void rt2x00queue_init(struct rt2x00_dev *rt2x00dev,
+ 
+ 	rt2x00dev->ops->queue_init(queue);
+ 
+-	queue->threshold = DIV_ROUND_UP(queue->limit, 10);
++	queue->threshold = DIV_ROUND_UP(queue->limit, 4);
+ }
+ 
+ int rt2x00queue_allocate(struct rt2x00_dev *rt2x00dev)
+-- 
+2.7.5
+
