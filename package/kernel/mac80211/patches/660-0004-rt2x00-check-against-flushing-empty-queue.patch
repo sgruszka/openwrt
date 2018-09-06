@@ -1,0 +1,64 @@
+From 811a3991510735566b66069fdd4ce3ce33a2ec18 Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Mon, 30 Apr 2018 15:19:17 +0200
+Subject: [PATCH] rt2x00: check against flushing empty queue
+
+We have check if queue is not empty when start flushing queues on
+by mac80211 callback, but we also can start flushing queues by internal
+driver calls. So move check into rt2x00queue_flush_queue() to assure
+we do not flush empty queue anytime.
+
+Additionally add warning if we start to kick empty queue as in such
+situation we set wrong index in the HW queue, what can confuse the HW
+and have various negative consequences.
+
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+Signed-off-by: Kalle Valo <kvalo@codeaurora.org>
+---
+ drivers/net/wireless/ralink/rt2x00/rt2800mmio.c  | 1 +
+ drivers/net/wireless/ralink/rt2x00/rt2x00mac.c   | 3 +--
+ drivers/net/wireless/ralink/rt2x00/rt2x00queue.c | 2 ++
+ 3 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2800mmio.c b/drivers/net/wireless/ralink/rt2x00/rt2800mmio.c
+index 1123e2bed803..e1a7ed7e4892 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800mmio.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800mmio.c
+@@ -600,6 +600,7 @@ void rt2800mmio_kick_queue(struct data_queue *queue)
+ 	case QID_AC_VI:
+ 	case QID_AC_BE:
+ 	case QID_AC_BK:
++		WARN_ON_ONCE(rt2x00queue_empty(queue));
+ 		entry = rt2x00queue_get_entry(queue, Q_INDEX);
+ 		rt2x00mmio_register_write(rt2x00dev, TX_CTX_IDX(queue->qid),
+ 					  entry->entry_idx);
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2x00mac.c b/drivers/net/wireless/ralink/rt2x00/rt2x00mac.c
+index a971bc7a6b63..c380c1f56ba6 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00mac.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00mac.c
+@@ -739,8 +739,7 @@ void rt2x00mac_flush(struct ieee80211_hw *hw, struct ieee80211_vif *vif,
+ 		return;
+ 
+ 	tx_queue_for_each(rt2x00dev, queue)
+-		if (!rt2x00queue_empty(queue))
+-			rt2x00queue_flush_queue(queue, drop);
++		rt2x00queue_flush_queue(queue, drop);
+ }
+ EXPORT_SYMBOL_GPL(rt2x00mac_flush);
+ 
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c b/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
+index a6884e73d2ab..7c1f8f561d4a 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00queue.c
+@@ -1000,6 +1000,8 @@ void rt2x00queue_flush_queue(struct data_queue *queue, bool drop)
+ 		(queue->qid == QID_AC_BE) ||
+ 		(queue->qid == QID_AC_BK);
+ 
++	if (rt2x00queue_empty(queue))
++		return;
+ 
+ 	/*
+ 	 * If we are not supposed to drop any pending
+-- 
+2.7.5
+
