@@ -5,25 +5,9 @@ Subject: [PATCH 1/2] rt2800: change queue limit to 256 for pci/soc
 
 Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
 ---
- drivers/net/wireless/mediatek/mt7601u/main.c    | 3 +--
  drivers/net/wireless/ralink/rt2x00/rt2800mmio.c | 2 +-
  2 files changed, 2 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/net/wireless/mediatek/mt7601u/main.c b/drivers/net/wireless/mediatek/mt7601u/main.c
-index 0f1789020960..d221b702a13b 100644
---- a/drivers/net/wireless/mediatek/mt7601u/main.c
-+++ b/drivers/net/wireless/mediatek/mt7601u/main.c
-@@ -81,9 +81,8 @@ static void mt7601u_remove_interface(struct ieee80211_hw *hw,
- {
- 	struct mt7601u_dev *dev = hw->priv;
- 	struct mt76_vif *mvif = (struct mt76_vif *) vif->drv_priv;
--	unsigned int wcid = mvif->group_wcid.idx;
- 
--	dev->wcid_mask[wcid / BITS_PER_LONG] &= ~BIT(wcid % BITS_PER_LONG);
-+	dev->vif_mask &= ~BIT(mvif->idx);
- }
- 
- static int mt7601u_config(struct ieee80211_hw *hw, u32 changed)
 diff --git a/drivers/net/wireless/ralink/rt2x00/rt2800mmio.c b/drivers/net/wireless/ralink/rt2x00/rt2800mmio.c
 index e1a7ed7e4892..2d7c40d0a4e7 100644
 --- a/drivers/net/wireless/ralink/rt2x00/rt2800mmio.c
