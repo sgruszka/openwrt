@@ -1,0 +1,36 @@
+From d488b4e3ca9f36ccd65c9f917694374e26baccee Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Wed, 10 Oct 2018 17:20:51 +0200
+Subject: [PATCH] rt2800: printk init registers
+
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+---
+ drivers/net/wireless/ralink/rt2x00/rt2800lib.c | 5 ++---
+ 1 file changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+index 7b6effaa0740..90609cc4690e 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+@@ -5461,9 +5461,7 @@ static int rt2800_init_registers(struct rt2x00_dev *rt2x00dev)
+ 		}
+ 	} else if (rt2x00_rt(rt2x00dev, RT5390) ||
+ 		   rt2x00_rt(rt2x00dev, RT5392)) {
+-		rt2800_register_write(rt2x00dev, TX_SW_CFG0, 0x00000404);
+-		rt2800_register_write(rt2x00dev, TX_SW_CFG1, 0x00080606);
+-		rt2800_register_write(rt2x00dev, TX_SW_CFG2, 0x00000000);
++		printk("Init RT539{0,2} registers\n");
+ 	} else if (rt2x00_rt(rt2x00dev, RT5592)) {
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG0, 0x00000404);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG1, 0x00000000);
+@@ -5471,6 +5469,7 @@ static int rt2800_init_registers(struct rt2x00_dev *rt2x00dev)
+ 	} else if (rt2x00_rt(rt2x00dev, RT5350)) {
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG0, 0x00000404);
+ 	} else if (rt2x00_rt(rt2x00dev, RT6352)) {
++		printk("Init RT6352 registers\n");
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG0, 0x00000401);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG1, 0x000C0000);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG2, 0x000C0408);
+-- 
+2.7.5
+
