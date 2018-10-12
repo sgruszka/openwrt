@@ -1,0 +1,51 @@
+From 1bb80279f7d867d19a80969a345c4d2590ac33d4 Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Tue, 9 Oct 2018 13:59:43 +0200
+Subject: [PATCH v4 3/5] rt2800: enable TX_PIN_CFG_LNA_PE_ bits per band
+
+Do not enable TX_PIN_CFG_LNA_PE_A* bits for 2.4GHz band and
+vice versa TX_PIN_CFG_LNA_PE_G* bits for 5GHz.
+
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+---
+ drivers/net/wireless/ralink/rt2x00/rt2800lib.c | 18 ++++++++++++------
+ 1 file changed, 12 insertions(+), 6 deletions(-)
+
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+index a1075b4ed248..aa6a38db8018 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+@@ -3891,18 +3891,24 @@ static void rt2800_config_channel(struct rt2x00_dev *rt2x00dev,
+ 	switch (rt2x00dev->default_ant.rx_chain_num) {
+ 	case 3:
+ 		/* Turn on tertiary LNAs */
+-		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_A2_EN, 1);
+-		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_G2_EN, 1);
++		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_A2_EN,
++				   rf->channel > 14);
++		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_G2_EN,
++				   rf->channel <= 14);
+ 		/* fall-through */
+ 	case 2:
+ 		/* Turn on secondary LNAs */
+-		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_A1_EN, 1);
+-		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_G1_EN, 1);
++		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_A1_EN,
++				   rf->channel > 14);
++		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_G1_EN,
++				   rf->channel <= 14);
+ 		/* fall-through */
+ 	case 1:
+ 		/* Turn on primary LNAs */
+-		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_A0_EN, 1);
+-		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_G0_EN, 1);
++		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_A0_EN,
++				   rf->channel > 14);
++		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_LNA_PE_G0_EN,
++				   rf->channel <= 14);
+ 		break;
+ 	}
+ 
+-- 
+2.7.5
+

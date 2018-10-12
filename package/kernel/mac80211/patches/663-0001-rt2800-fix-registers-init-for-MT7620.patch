@@ -1,0 +1,51 @@
+From b90a38af766d98c32cb5a71f710a23560a752ffa Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Thu, 11 Oct 2018 16:17:54 +0200
+Subject: [PATCH v4] rt2800: fix registers init for MT7620
+
+There is duplicated 'if (rt2x00_rt(rt2x00dev, RT6352))' entry that
+causes we do not perform register initialization for RT6352 (MT7620
+SOCs) in correct branch. Fix this and disable registers initialization
+that is specific to particular MT7620 revision.
+
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+---
+ drivers/net/wireless/ralink/rt2x00/rt2800lib.c | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+index daf20d7424ac..16d6d99b1d44 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+@@ -5451,8 +5451,7 @@ static int rt2800_init_registers(struct rt2x00_dev *rt2x00dev)
+ 					      0x00000000);
+ 		}
+ 	} else if (rt2x00_rt(rt2x00dev, RT5390) ||
+-		   rt2x00_rt(rt2x00dev, RT5392) ||
+-		   rt2x00_rt(rt2x00dev, RT6352)) {
++		   rt2x00_rt(rt2x00dev, RT5392)) {
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG0, 0x00000404);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG1, 0x00080606);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG2, 0x00000000);
+@@ -5466,6 +5465,10 @@ static int rt2800_init_registers(struct rt2x00_dev *rt2x00dev)
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG0, 0x00000401);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG1, 0x000C0000);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG2, 0x000C0408);
++		/* TODO add chip version support and init registers
++		 * according to the version.
++		 */
++#if 0
+ 		rt2800_register_write(rt2x00dev, MIMO_PS_CFG, 0x00000002);
+ 		rt2800_register_write(rt2x00dev, TX_PIN_CFG, 0x00150F0F);
+ 		rt2800_register_write(rt2x00dev, TX_ALC_VGA3, 0x06060606);
+@@ -5480,6 +5483,7 @@ static int rt2800_init_registers(struct rt2x00_dev *rt2x00dev)
+ 		reg = rt2800_register_read(rt2x00dev, TX_ALC_CFG_1);
+ 		rt2x00_set_field32(&reg, TX_ALC_CFG_1_ROS_BUSY_EN, 0);
+ 		rt2800_register_write(rt2x00dev, TX_ALC_CFG_1, reg);
++#endif
+ 	} else {
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG0, 0x00000000);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG1, 0x00080606);
+-- 
+2.7.5
+

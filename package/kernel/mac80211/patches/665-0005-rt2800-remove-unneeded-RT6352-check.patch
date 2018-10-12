@@ -1,0 +1,30 @@
+From 96c3b64fced488e0d564b9b14495b4c5e48e56a0 Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Tue, 9 Oct 2018 14:06:46 +0200
+Subject: [PATCH v4 5/5] rt2800: remove unneeded RT6352 check
+
+Remove rt2x00_rt(rt2x00dev, RT6352)) check from
+rt2800_config_channel_rf53xx() which is not called for RT6352 devices.
+
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+---
+ drivers/net/wireless/ralink/rt2x00/rt2800lib.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+index 73cc910da37b..06e8aa791eac 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+@@ -3037,8 +3037,7 @@ static void rt2800_config_channel_rf53xx(struct rt2x00_dev *rt2x00dev,
+ 			rt2800_rfcsr_write(rt2x00dev, 59,
+ 					   r59_nonbt_rev[idx]);
+ 		} else if (rt2x00_rt(rt2x00dev, RT5390) ||
+-			   rt2x00_rt(rt2x00dev, RT5392) ||
+-			   rt2x00_rt(rt2x00dev, RT6352)) {
++			   rt2x00_rt(rt2x00dev, RT5392)) {
+ 			static const char r59_non_bt[] = {0x8f, 0x8f,
+ 				0x8f, 0x8f, 0x8f, 0x8f, 0x8f, 0x8d,
+ 				0x8a, 0x88, 0x88, 0x87, 0x87, 0x86};
+-- 
+2.7.5
+

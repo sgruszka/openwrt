@@ -1,0 +1,45 @@
+From 917c36def17034056547e584b5ddd46f79efcf76 Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Tue, 9 Oct 2018 14:02:31 +0200
+Subject: [PATCH v4 4/5] rt2800: enable TX_PIN_CFG_RFRX_EN only for MT7620
+
+The TX_PIN_CFG_RFRX_EN bit was not set on other devices than MT7620,
+restore old behavaviour since setting this bit maight not be
+correct for older devices.
+
+Fixes: 41977e86c984 ("rt2x00: add support for MT7620")
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+---
+ drivers/net/wireless/ralink/rt2x00/rt2800lib.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+index aa6a38db8018..73cc910da37b 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+@@ -3856,10 +3856,12 @@ static void rt2800_config_channel(struct rt2x00_dev *rt2x00dev,
+ 	if (rt2x00_rt(rt2x00dev, RT3572))
+ 		rt2800_rfcsr_write(rt2x00dev, 8, 0);
+ 
+-	if (rt2x00_rt(rt2x00dev, RT6352))
++	if (rt2x00_rt(rt2x00dev, RT6352)) {
+ 		tx_pin = rt2800_register_read(rt2x00dev, TX_PIN_CFG);
+-	else
++		rt2x00_set_field32(&tx_pin, TX_PIN_CFG_RFRX_EN, 1);
++	} else {
+ 		tx_pin = 0;
++	}
+ 
+ 	switch (rt2x00dev->default_ant.tx_chain_num) {
+ 	case 3:
+@@ -3914,7 +3916,6 @@ static void rt2800_config_channel(struct rt2x00_dev *rt2x00dev,
+ 
+ 	rt2x00_set_field32(&tx_pin, TX_PIN_CFG_RFTR_EN, 1);
+ 	rt2x00_set_field32(&tx_pin, TX_PIN_CFG_TRSW_EN, 1);
+-	rt2x00_set_field32(&tx_pin, TX_PIN_CFG_RFRX_EN, 1); /* mt7620 */
+ 
+ 	rt2800_register_write(rt2x00dev, TX_PIN_CFG, tx_pin);
+ 
+-- 
+2.7.5
+
