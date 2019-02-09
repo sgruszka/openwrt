@@ -1,0 +1,28 @@
+From 74d6d3b50a009239a980fea097a5a1cd9fcd72d5 Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Fri, 8 Feb 2019 15:06:51 +0100
+Subject: [PATCH v2 8/8] rt2x00mmio: remove legacy comment
+
+Remove comment about fields that ware removed.
+
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+---
+ drivers/net/wireless/ralink/rt2x00/rt2x00mmio.h | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2x00mmio.h b/drivers/net/wireless/ralink/rt2x00/rt2x00mmio.h
+index 184a4148b2f8..03e6cdb0b5a4 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00mmio.h
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00mmio.h
+@@ -80,8 +80,6 @@ int rt2x00mmio_regbusy_read(struct rt2x00_dev *rt2x00dev,
+  *
+  * @desc: Pointer to device descriptor
+  * @desc_dma: DMA pointer to &desc.
+- * @data: Pointer to device's entry memory.
+- * @data_dma: DMA pointer to &data.
+  */
+ struct queue_entry_priv_mmio {
+ 	__le32 *desc;
+-- 
+2.7.5
+
