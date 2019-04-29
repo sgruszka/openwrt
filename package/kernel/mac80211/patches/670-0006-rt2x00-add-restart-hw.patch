@@ -1,0 +1,161 @@
+From 6e45b21cacad672159281547cbf53e59af3b3473 Mon Sep 17 00:00:00 2001
+From: Stanislaw Gruszka <sgruszka@redhat.com>
+Date: Fri, 26 Apr 2019 13:36:26 +0200
+Subject: [PATCH 6/7] rt2x00: add restart hw
+
+Add ieee80211_restart_hw() to watchdog and debugfs file for testing
+if restart works as expected.
+
+Signed-off-by: Stanislaw Gruszka <sgruszka@redhat.com>
+---
+ drivers/net/wireless/ralink/rt2x00/rt2800lib.c   |  4 +++
+ drivers/net/wireless/ralink/rt2x00/rt2x00.h      |  7 +++++
+ drivers/net/wireless/ralink/rt2x00/rt2x00debug.c | 35 ++++++++++++++++++++++++
+ drivers/net/wireless/ralink/rt2x00/rt2x00dev.c   | 10 +++++--
+ 4 files changed, 54 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+index 4a2e15b5aba4..7d488fa8ef05 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+@@ -1266,6 +1266,9 @@ void rt2800_watchdog(struct rt2x00_dev *rt2x00dev)
+ 
+ 	if (hung_rx)
+ 		rt2x00_warn(rt2x00dev, "Watchdog RX hung detected\n");
++
++	if (hung_tx || hung_rx)
++		ieee80211_restart_hw(rt2x00dev->hw);
+ }
+ EXPORT_SYMBOL_GPL(rt2800_watchdog);
+ 
+@@ -10286,6 +10289,7 @@ int rt2800_probe_hw(struct rt2x00_dev *rt2x00dev)
+ 		__set_bit(REQUIRE_TASKLET_CONTEXT, &rt2x00dev->cap_flags);
+ 	}
+ 
++	__set_bit(CAPABILITY_RESTART_HW, &rt2x00dev->cap_flags);
+ 	rt2x00dev->link.watchdog_interval = msecs_to_jiffies(100);
+ 
+ 	/*
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2x00.h b/drivers/net/wireless/ralink/rt2x00/rt2x00.h
+index cdf496c55b9d..1d7eaa9ecffb 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00.h
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00.h
+@@ -724,6 +724,7 @@ enum rt2x00_capability_flags {
+ 	CAPABILITY_VCO_RECALIBRATION,
+ 	CAPABILITY_EXTERNAL_PA_TX0,
+ 	CAPABILITY_EXTERNAL_PA_TX1,
++	CAPABILITY_RESTART_HW,
+ };
+ 
+ /*
+@@ -1281,6 +1282,12 @@ rt2x00_has_cap_vco_recalibration(struct rt2x00_dev *rt2x00dev)
+ 	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_VCO_RECALIBRATION);
+ }
+ 
++static inline bool
++rt2x00_has_cap_restart_hw(struct rt2x00_dev *rt2x00dev)
++{
++	return rt2x00_has_cap_flag(rt2x00dev, CAPABILITY_RESTART_HW);
++}
++
+ /**
+  * rt2x00queue_map_txskb - Map a skb into DMA for TX purposes.
+  * @entry: Pointer to &struct queue_entry
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2x00debug.c b/drivers/net/wireless/ralink/rt2x00/rt2x00debug.c
+index 05a2e8da412c..860a19cae3e5 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00debug.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00debug.c
+@@ -63,6 +63,7 @@ struct rt2x00debug_intf {
+ 	 *   - chipset file
+ 	 *   - device state flags file
+ 	 *   - device capability flags file
++	 *   - hardware restart file
+ 	 *   - register folder
+ 	 *     - csr offset/value files
+ 	 *     - eeprom offset/value files
+@@ -79,6 +80,7 @@ struct rt2x00debug_intf {
+ 	struct dentry *chipset_entry;
+ 	struct dentry *dev_flags;
+ 	struct dentry *cap_flags;
++	struct dentry *restart_hw;
+ 	struct dentry *register_folder;
+ 	struct dentry *csr_off_entry;
+ 	struct dentry *csr_val_entry;
+@@ -577,6 +579,34 @@ static const struct file_operations rt2x00debug_fop_cap_flags = {
+ 	.llseek		= default_llseek,
+ };
+ 
++static ssize_t rt2x00debug_write_restart_hw(struct file *file,
++					    const char __user *buf,
++					    size_t length,
++					    loff_t *offset)
++{
++	struct rt2x00debug_intf *intf =	file->private_data;
++	struct rt2x00_dev *rt2x00dev = intf->rt2x00dev;
++	static unsigned long last_reset;
++
++	if (!rt2x00_has_cap_restart_hw(rt2x00dev))
++		return -EOPNOTSUPP;
++
++	if (time_before(jiffies, last_reset + msecs_to_jiffies(2000)))
++		return -EBUSY;
++
++	last_reset = jiffies;
++
++	ieee80211_restart_hw(rt2x00dev->hw);
++	return length;
++}
++
++static const struct file_operations rt2x00debug_restart_hw = {
++	.owner = THIS_MODULE,
++	.write = rt2x00debug_write_restart_hw,
++	.open = simple_open,
++	.llseek = generic_file_llseek,
++};
++
+ static struct dentry *rt2x00debug_create_file_driver(const char *name,
+ 						     struct rt2x00debug_intf
+ 						     *intf,
+@@ -672,6 +702,10 @@ void rt2x00debug_register(struct rt2x00_dev *rt2x00dev)
+ 					      intf->driver_folder, intf,
+ 					      &rt2x00debug_fop_cap_flags);
+ 
++	intf->restart_hw = debugfs_create_file("restart_hw", 0200,
++					       intf->driver_folder, intf,
++					       &rt2x00debug_restart_hw);
++
+ 	intf->register_folder =
+ 	    debugfs_create_dir("register", intf->driver_folder);
+ 
+@@ -753,6 +787,7 @@ void rt2x00debug_deregister(struct rt2x00_dev *rt2x00dev)
+ 	debugfs_remove(intf->csr_off_entry);
+ 	debugfs_remove(intf->register_folder);
+ 	debugfs_remove(intf->dev_flags);
++	debugfs_remove(intf->restart_hw);
+ 	debugfs_remove(intf->cap_flags);
+ 	debugfs_remove(intf->chipset_entry);
+ 	debugfs_remove(intf->driver_entry);
+diff --git a/drivers/net/wireless/ralink/rt2x00/rt2x00dev.c b/drivers/net/wireless/ralink/rt2x00/rt2x00dev.c
+index 357c0941aaad..93ab4d089b21 100644
+--- a/drivers/net/wireless/ralink/rt2x00/rt2x00dev.c
++++ b/drivers/net/wireless/ralink/rt2x00/rt2x00dev.c
+@@ -1269,8 +1269,14 @@ int rt2x00lib_start(struct rt2x00_dev *rt2x00dev)
+ {
+ 	int retval;
+ 
+-	if (test_bit(DEVICE_STATE_STARTED, &rt2x00dev->flags))
+-		return 0;
++	if (test_bit(DEVICE_STATE_STARTED, &rt2x00dev->flags)) {
++		/*
++		 * This is special case for ieee80211_restart_hw(), otherwise
++		 * mac80211 never call start() two times in row without stop();
++		 */
++		rt2x00dev->ops->lib->pre_reset_hw(rt2x00dev);
++		rt2x00lib_stop(rt2x00dev);
++	}
+ 
+ 	/*
+ 	 * If this is the first interface which is added,
+-- 
+2.7.5
+

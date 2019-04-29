@@ -1,0 +1,83 @@
+diff -uprN -X /home/stasiu/Sources/linux/Documentation/dontdiff backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800lib.c backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+--- backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800lib.c	2019-04-29 11:05:00.493966721 +0200
++++ backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800lib.c	2019-04-29 11:06:01.154448838 +0200
+@@ -1844,6 +1844,25 @@ int rt2800_sta_remove(struct rt2x00_dev
+ }
+ EXPORT_SYMBOL_GPL(rt2800_sta_remove);
+ 
++void rt2800_pre_reset_hw(struct rt2x00_dev *rt2x00dev)
++{
++	struct rt2800_drv_data *drv_data = rt2x00dev->drv_data;
++	struct data_queue *queue = rt2x00dev->bcn;
++	struct queue_entry *entry;	
++	int i, wcid;
++
++	for (wcid = WCID_START; wcid < WCID_END; wcid++) {
++		drv_data->wcid_to_sta[wcid - WCID_START] = NULL;
++		__clear_bit(wcid - WCID_START, drv_data->sta_ids);
++	}
++
++	for (i = 0; i < queue->limit; i++) {
++		entry = &queue->entries[i];
++		clear_bit(ENTRY_BCN_ASSIGNED, &entry->flags);
++	}
++}
++EXPORT_SYMBOL_GPL(rt2800_pre_reset_hw);
++
+ void rt2800_config_filter(struct rt2x00_dev *rt2x00dev,
+ 			  const unsigned int filter_flags)
+ {
+diff -uprN -X /home/stasiu/Sources/linux/Documentation/dontdiff backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800lib.h backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800lib.h
+--- backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800lib.h	2019-04-29 11:05:00.493966721 +0200
++++ backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800lib.h	2019-04-29 11:06:01.154448838 +0200
+@@ -277,5 +277,6 @@ void rt2800_disable_wpdma(struct rt2x00_
+ void rt2800_get_txwi_rxwi_size(struct rt2x00_dev *rt2x00dev,
+ 			       unsigned short *txwi_size,
+ 			       unsigned short *rxwi_size);
++void rt2800_pre_reset_hw(struct rt2x00_dev *rt2x00dev);
+ 
+ #endif /* RT2800LIB_H */
+diff -uprN -X /home/stasiu/Sources/linux/Documentation/dontdiff backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800pci.c backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800pci.c
+--- backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800pci.c	2019-04-29 11:05:00.493966721 +0200
++++ backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800pci.c	2019-04-29 11:06:46.295807607 +0200
+@@ -381,6 +381,7 @@ static const struct rt2x00lib_ops rt2800
+ 	.config			= rt2800_config,
+ 	.sta_add		= rt2800_sta_add,
+ 	.sta_remove		= rt2800_sta_remove,
++	.pre_reset_hw		= rt2800_pre_reset_hw,
+ };
+ 
+ static const struct rt2x00_ops rt2800pci_ops = {
+diff -uprN -X /home/stasiu/Sources/linux/Documentation/dontdiff backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800soc.c backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800soc.c
+--- backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800soc.c	2019-04-29 11:05:00.494966729 +0200
++++ backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800soc.c	2019-04-29 11:07:33.557183219 +0200
+@@ -213,6 +213,7 @@ static const struct rt2x00lib_ops rt2800
+ 	.config			= rt2800_config,
+ 	.sta_add		= rt2800_sta_add,
+ 	.sta_remove		= rt2800_sta_remove,
++	.pre_reset_hw		= rt2800_pre_reset_hw,
+ };
+ 
+ static const struct rt2x00_ops rt2800soc_ops = {
+diff -uprN -X /home/stasiu/Sources/linux/Documentation/dontdiff backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800usb.c backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800usb.c
+--- backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800usb.c	2019-04-29 11:05:00.494966729 +0200
++++ backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800usb.c	2019-04-29 11:07:12.944019424 +0200
+@@ -735,6 +735,7 @@ static const struct rt2x00lib_ops rt2800
+ 	.config			= rt2800_config,
+ 	.sta_add		= rt2800_sta_add,
+ 	.sta_remove		= rt2800_sta_remove,
++	.pre_reset_hw		= rt2800_pre_reset_hw,
+ };
+ 
+ static void rt2800usb_queue_init(struct data_queue *queue)
+diff -uprN -X /home/stasiu/Sources/linux/Documentation/dontdiff backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2x00.h backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2x00.h
+--- backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2x00.h	2019-04-29 11:05:00.486966665 +0200
++++ backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2x00.h	2019-04-29 11:06:01.155448846 +0200
+@@ -629,6 +629,7 @@ struct rt2x00lib_ops {
+ 	void (*config) (struct rt2x00_dev *rt2x00dev,
+ 			struct rt2x00lib_conf *libconf,
+ 			const unsigned int changed_flags);
++	void (*pre_reset_hw) (struct rt2x00_dev *rt2x00dev);
+ 	int (*sta_add) (struct rt2x00_dev *rt2x00dev,
+ 			struct ieee80211_vif *vif,
+ 			struct ieee80211_sta *sta);
