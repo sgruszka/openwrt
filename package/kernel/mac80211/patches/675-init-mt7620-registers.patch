@@ -1,0 +1,23 @@
+diff -uprN backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800lib.c backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800lib.c
+--- backports-2017-11-01.orig/drivers/net/wireless/ralink/rt2x00/rt2800lib.c	2019-11-02 19:24:42.493097387 +0100
++++ backports-2017-11-01/drivers/net/wireless/ralink/rt2x00/rt2800lib.c	2019-11-02 19:30:07.535166222 +0100
+@@ -5901,10 +5901,7 @@ static int rt2800_init_registers(struct
+ 		/* TODO add chip version support and init registers
+ 		 * according to the version.
+ 		 */
+-#if 0
+-		rt2800_register_write(rt2x00dev, MIMO_PS_CFG, 0x00000002);
+-		rt2800_register_write(rt2x00dev, TX_PIN_CFG, 0x00150F0F);
+-		rt2800_register_write(rt2x00dev, TX_ALC_VGA3, 0x06060606);
++		rt2800_register_write(rt2x00dev, TX_ALC_VGA3, 0x0);
+ 		rt2800_register_write(rt2x00dev, TX0_BB_GAIN_ATTEN, 0x0);
+ 		rt2800_register_write(rt2x00dev, TX1_BB_GAIN_ATTEN, 0x0);
+ 		rt2800_register_write(rt2x00dev, TX0_RF_GAIN_ATTEN, 0x6C6C666C);
+@@ -5916,7 +5913,6 @@ static int rt2800_init_registers(struct
+ 		reg = rt2800_register_read(rt2x00dev, TX_ALC_CFG_1);
+ 		rt2x00_set_field32(&reg, TX_ALC_CFG_1_ROS_BUSY_EN, 0);
+ 		rt2800_register_write(rt2x00dev, TX_ALC_CFG_1, reg);
+-#endif
+ 	} else {
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG0, 0x00000000);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG1, 0x00080606);
