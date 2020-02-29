@@ -4,7 +4,7 @@
  typedef uint16_t __u16;
  typedef uint32_t __u32;
  typedef unsigned int uint;
-+typedef uint64_t __u64;
++//typedef uint64_t __u64;
 +#ifndef linux
 +typedef int __kernel_daddr_t;
 +typedef unsigned int __kernel_ino_t;
