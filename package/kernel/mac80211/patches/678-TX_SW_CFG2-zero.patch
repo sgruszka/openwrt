@@ -1,0 +1,16 @@
+--- a/drivers/net/wireless/ralink/rt2x00/rt2800lib.c.orig	2020-12-10 12:05:27.796211328 +0100
++++ b/drivers/net/wireless/ralink/rt2x00/rt2800lib.c	2020-12-10 12:08:26.504306675 +0100
+@@ -5894,11 +5894,8 @@ static int rt2800_init_registers(struct
+ 	} else if (rt2x00_rt(rt2x00dev, RT6352)) {
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG0, 0x00000401);
+ 		rt2800_register_write(rt2x00dev, TX_SW_CFG1, 0x000C0000);
+-		rt2800_register_write(rt2x00dev, TX_SW_CFG2, 0x000C0408);
+-		/* TODO add chip version support and init registers
+-		 * according to the version.
+-		 */
+-		rt2800_register_write(rt2x00dev, TX_ALC_VGA3, 0x0);
++		rt2800_register_write(rt2x00dev, TX_SW_CFG2, 0x00000000);
++		rt2800_register_write(rt2x00dev, TX_ALC_VGA3, 0x00000000);
+ 		rt2800_register_write(rt2x00dev, TX0_BB_GAIN_ATTEN, 0x0);
+ 		rt2800_register_write(rt2x00dev, TX1_BB_GAIN_ATTEN, 0x0);
+ 		rt2800_register_write(rt2x00dev, TX0_RF_GAIN_ATTEN, 0x6C6C666C);
